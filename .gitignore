@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.spec
+.idea/
+.vscode/
+
+# Keep captures folder structure, but don't commit private personal photos
+captures/*.jpg
+captures/*.png
+!captures/.gitkeep
+
+# Executables
+*.exe
+
+# Logs
+logs/*.log

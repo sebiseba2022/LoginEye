@@ -1,6 +1,18 @@
 import os
 import sys
+import ctypes
 import argparse
+
+# Attach to parent console when invoked with CLI flags as a --noconsole executable
+if getattr(sys, 'frozen', False) and sys.stdout is None and any(
+    arg in sys.argv for arg in ("--test", "--status", "--trigger", "-h", "--help")
+):
+    try:
+        if ctypes.windll.kernel32.AttachConsole(-1):
+            sys.stdout = open("CONOUT$", "w", encoding="utf-8", errors="replace")
+            sys.stderr = open("CONOUT$", "w", encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 # Ensure src module is discoverable
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -61,6 +73,11 @@ def main():
         help="Run continuously in the background monitoring session changes and security events."
     )
     parser.add_argument(
+        "--boot",
+        action="store_true",
+        help="Run in pre-login boot mode (pre-warms camera on initial Windows boot screen before user login)."
+    )
+    parser.add_argument(
         "--trigger",
         choices=["PASS", "FAIL"],
         help="Immediately capture and stamp a single photo for PASS or FAIL event."
@@ -89,7 +106,7 @@ def main():
     )
 
     args = parser.parse_args()
-    service = LoginEyeService()
+    service = LoginEyeService(boot_mode=args.boot)
 
     if args.status:
         show_status()

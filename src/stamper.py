@@ -40,11 +40,28 @@ def stamp_image(frame, status, username=None, reason=None):
     badge_text = f"[ {status.upper()} ]"
     
     # Defaults
-    if not username:
+    if not username or username.upper() == "SYSTEM" or username.endswith("$"):
         try:
-            username = os.getlogin()
+            u = os.getlogin()
+            if u and u.upper() != "SYSTEM" and not u.endswith("$"):
+                username = u
         except Exception:
-            username = os.environ.get("USERNAME", "UnknownUser")
+            pass
+    if not username or username.upper() == "SYSTEM" or username.endswith("$"):
+        env_u = os.environ.get("USERNAME", "")
+        if env_u and env_u.upper() != "SYSTEM" and not env_u.endswith("$"):
+            username = env_u
+        else:
+            # Infer owner username from C:\Users when running as SYSTEM at boot
+            try:
+                skip = {"public", "default", "default user", "all users", "defaultapppool"}
+                candidates = [
+                    d for d in os.listdir("C:\\Users")
+                    if os.path.isdir(os.path.join("C:\\Users", d)) and d.lower() not in skip
+                ]
+                username = candidates[0] if candidates else "User"
+            except Exception:
+                username = "User"
             
     if not reason:
         reason = "Authentication Succeeded" if is_pass else "Incorrect Password Attempt"
